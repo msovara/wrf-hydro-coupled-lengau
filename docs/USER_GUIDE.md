@@ -385,7 +385,7 @@ The module file is written to `/apps/chpc/scripts/modules/earth/` during install
 
 ```bash
 export MODULE_DIR=$HOME/modulefiles/earth
-mkdir -p $MODULEDIR
+mkdir -p $MODULE_DIR
 module use $HOME/modulefiles
 ```
 
