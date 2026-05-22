@@ -1,0 +1,33 @@
+#!/bin/bash
+#PBS -N wrf_coupled_run
+#PBS -P YOUR_PROJECT
+#PBS -q normal
+#PBS -l select=2:ncpus=24:mpiprocs=24:nodetype=haswell_reg
+#PBS -l walltime=24:00:00
+#PBS -j oe
+#
+# Template PBS job for a coupled WRF-Hydro simulation on Lengau.
+# Edit PBS -P, queue, walltime, and CASE_DIR before submitting.
+#
+set -euo pipefail
+
+CASE_DIR="${CASE_DIR:-${HOME}/cases/my_hydro_run}"
+NP="${NP:-48}"
+
+module purge
+module load chpc/earth/wrf-lengau-gcc-hydro
+
+cd "${CASE_DIR}"
+
+echo "=== Coupled WRF-Hydro run ==="
+echo "CASE_DIR = ${CASE_DIR}"
+echo "WRF_ROOT = ${WRF_ROOT}"
+echo "NP       = ${NP}"
+date
+
+# Uncomment the stage you need:
+# mpirun -np ${NP} real.exe
+mpirun -np ${NP} wrf.exe
+
+echo "=== Run complete ==="
+date

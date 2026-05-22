@@ -1,0 +1,50 @@
+# Build artifacts
+*.o
+*.mod
+*.a
+*.so
+
+# Log files
+*.log
+*.out
+*.err
+
+# Temporary / internal
+*.tmp
+*.bak
+*~
+*.b64
+_probe*.sh
+_backup*.sh
+_redeploy.sh
+_stage_and_deploy.sh
+_smoketest.sh
+run_deploy.sh
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Cluster install logs
+install_log.txt
+configure.log
+compile.log
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

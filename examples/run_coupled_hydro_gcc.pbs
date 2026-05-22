@@ -1,0 +1,36 @@
+#!/bin/bash
+#PBS -N wrf_hydro_gcc_build
+#PBS -P RCHPC
+#PBS -q internal
+#PBS -l select=1:ncpus=24:mpiprocs=24:nodetype=haswell_reg
+#PBS -l walltime=10:00:00
+#PBS -W group_list=chpc_staff
+#PBS -j oe
+#
+# Build coupled WRF 4.7.1 + WRF-Hydro with GCC on Lengau.
+# Prerequisite: run download_wrf_source.sh and checkout_wrf_externals_dtn.sh on DTN.
+#
+set -euo pipefail
+
+export INSTALL_DIR="${INSTALL_DIR:-/home/apps/chpc/earth/WRF-4.7.1-hydro-gcc}"
+export TOOLCHAIN=gcc
+export WRF_HYDRO=1
+export WRF_CONFIG_OPTION=34
+export WRF_RUN_CLEAN=0
+export MODULE_NAME=wrf-lengau-gcc-hydro
+
+REPO="${REPO:-${HOME}/wrf-hydro-coupled-lengau}"
+SCRIPT="${REPO}/install_wrf_lengau_clean.sh"
+
+[[ -f "${SCRIPT}" ]] || SCRIPT="${INSTALL_DIR}/install_wrf_lengau_clean.sh"
+[[ -f "${SCRIPT}" ]] || { echo "ERROR: install_wrf_lengau_clean.sh not found"; exit 1; }
+
+mkdir -p "${INSTALL_DIR}"
+cp -f "${SCRIPT}" "${INSTALL_DIR}/"
+cp -f "${REPO}/diagnose_wrf_compile.sh" "${INSTALL_DIR}/" 2>/dev/null || true
+
+cd "${INSTALL_DIR}"
+bash install_wrf_lengau_clean.sh 2>&1 | tee build_hydro_gcc.log
+
+echo "=== Build finished ==="
+ls -la "${INSTALL_DIR}/bin/"*.exe 2>/dev/null || true
