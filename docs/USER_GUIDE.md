@@ -86,7 +86,7 @@ If the cluster install is already present:
 
 ```bash
 # Login to Lengau
-ssh msovara@lengau.chpc.ac.za
+ssh user@lengau.chpc.ac.za
 
 # Load coupled WRF-Hydro (GCC)
 module load chpc/earth/wrf-lengau-gcc-hydro
