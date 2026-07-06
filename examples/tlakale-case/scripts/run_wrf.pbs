@@ -1,0 +1,40 @@
+#!/bin/bash
+#PBS -N tlakale_wrf
+#PBS -P YOUR_PROJECT
+#PBS -q normal
+#PBS -l select=2:ncpus=24:mpiprocs=24:nodetype=haswell_reg
+#PBS -l walltime=48:00:00
+#PBS -j oe
+#
+# Coupled WRF-Hydro run for Inkomati Phase 1.
+# Set SIM_MODE and RUN_YEAR via qsub -v before submit, e.g.:
+#   qsub -v SIM_MODE=test run_wrf.pbs
+#   qsub -v SIM_MODE=year,RUN_YEAR=1980,RESTART=false run_wrf.pbs
+#
+set -euo pipefail
+
+EXAMPLE_DIR="${EXAMPLE_DIR:-${HOME}/wrf-hydro-coupled-lengau/examples/tlakale-case}"
+# shellcheck source=/dev/null
+source "${EXAMPLE_DIR}/config.env"
+
+SIM_MODE="${SIM_MODE:-test}"
+RUN_YEAR="${RUN_YEAR:-1980}"
+RESTART="${RESTART:-false}"
+
+bash "${EXAMPLE_DIR}/scripts/apply_namelists.sh"
+
+module purge
+module load "${WRF_MODULE}"
+
+cd "${CASE_DIR}"
+
+echo "=== Coupled WRF-Hydro ==="
+echo "CASE_DIR=${CASE_DIR}"
+echo "SIM_MODE=${SIM_MODE} RUN_YEAR=${RUN_YEAR} RESTART=${RESTART}"
+echo "WRF_ROOT=${WRF_ROOT}"
+date
+
+mpirun -np "${NP_WRF}" wrf.exe
+
+echo "=== wrf.exe complete ==="
+date

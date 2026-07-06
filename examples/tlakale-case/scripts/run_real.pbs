@@ -1,0 +1,33 @@
+#!/bin/bash
+#PBS -N tlakale_real
+#PBS -P YOUR_PROJECT
+#PBS -q normal
+#PBS -l select=2:ncpus=24:mpiprocs=24:nodetype=haswell_reg
+#PBS -l walltime=04:00:00
+#PBS -j oe
+#
+# Run real.exe for the Inkomati case.
+# Prerequisite: met_em.* linked into CASE_DIR.
+#
+set -euo pipefail
+
+EXAMPLE_DIR="${EXAMPLE_DIR:-${HOME}/wrf-hydro-coupled-lengau/examples/tlakale-case}"
+# shellcheck source=/dev/null
+source "${EXAMPLE_DIR}/config.env"
+
+module purge
+module load "${WRF_MODULE}"
+
+cd "${CASE_DIR}"
+
+# Link met_em from WPS if not already present
+if ! ls met_em.d0*.nc >/dev/null 2>&1; then
+  ln -sf "${WPS_CASE_DIR}"/met_em.d0*.nc .
+fi
+
+echo "=== real.exe (NP=${NP_REAL}) ==="
+date
+mpirun -np "${NP_REAL}" real.exe
+echo "=== real.exe complete ==="
+date
+ls -la wrfinput_d0* wrfbdy_d01 2>/dev/null

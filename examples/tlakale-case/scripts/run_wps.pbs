@@ -1,0 +1,34 @@
+#!/bin/bash
+#PBS -N tlakale_wps
+#PBS -P YOUR_PROJECT
+#PBS -q normal
+#PBS -l select=1:ncpus=8:mpiprocs=8:nodetype=haswell_reg
+#PBS -l walltime=04:00:00
+#PBS -j oe
+#
+# WPS workflow: geogrid -> ungrib -> metgrid
+# Prerequisite: ERA5 GRIB files in ERA5_GRIB_DIR; edit config.env first.
+#
+set -euo pipefail
+
+EXAMPLE_DIR="${EXAMPLE_DIR:-${HOME}/wrf-hydro-coupled-lengau/examples/tlakale-case}"
+# shellcheck source=/dev/null
+source "${EXAMPLE_DIR}/config.env"
+
+module purge
+module load "${WRF_MODULE}"
+
+cd "${WPS_CASE_DIR}"
+
+echo "=== geogrid ==="
+./geogrid.exe
+
+echo "=== ungrib ==="
+./link_grib.csh "${ERA5_GRIB_DIR}"/ERA5_*
+./ungrib.exe
+
+echo "=== metgrid ==="
+./metgrid.exe
+
+echo "=== WPS complete ==="
+ls -la met_em.d0*.nc 2>/dev/null | head -5

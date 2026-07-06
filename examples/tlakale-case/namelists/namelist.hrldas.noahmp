@@ -1,0 +1,64 @@
+&NOAHLSM_OFFLINE
+
+HRLDAS_SETUP_FILE = "./DOMAIN/wrfinput_d01.nc"
+INDIR = "./FORCING"
+SPATIAL_FILENAME = "./DOMAIN/soil_properties.nc"
+OUTDIR = "./"
+
+START_YEAR  = __YEAR__
+START_MONTH = 01
+START_DAY   = 01
+START_HOUR  = 00
+START_MIN   = 00
+
+! Coupled runs: dates here are placeholders; WRF drives forcing.
+! Keep NOAH_TIMESTEP aligned with WRF history interval (3600 s).
+
+KHOUR = 8760
+
+DYNAMIC_VEG_OPTION                = 4
+CANOPY_STOMATAL_RESISTANCE_OPTION = 1
+BTR_OPTION                        = 1
+RUNOFF_OPTION                     = 3
+SURFACE_DRAG_OPTION               = 1
+FROZEN_SOIL_OPTION                = 1
+SUPERCOOLED_WATER_OPTION          = 1
+RADIATIVE_TRANSFER_OPTION         = 3
+SNOW_ALBEDO_OPTION                = 2
+PCP_PARTITION_OPTION              = 1
+TBOT_OPTION                       = 2
+TEMP_TIME_SCHEME_OPTION           = 3
+GLACIER_OPTION                    = 2
+SURFACE_RESISTANCE_OPTION         = 4
+IMPERV_OPTION                     = 9
+
+FORCING_TIMESTEP = 3600
+NOAH_TIMESTEP    = 3600
+OUTPUT_TIMESTEP  = 3600
+
+RESTART_FREQUENCY_HOURS = 24
+SPLIT_OUTPUT_COUNT = 1
+
+NSOIL=4
+soil_thick_input(1) = 0.10
+soil_thick_input(2) = 0.30
+soil_thick_input(3) = 0.60
+soil_thick_input(4) = 1.00
+
+ZLVL = 10.0
+
+rst_bi_in = 0
+rst_bi_out = 0
+
+forcing_name_T = "T2D"
+forcing_name_Q = "Q2D"
+forcing_name_U = "U2D"
+forcing_name_V = "V2D"
+forcing_name_P = "PSFC"
+forcing_name_LW = "LWDOWN"
+forcing_name_SW = "SWDOWN"
+forcing_name_PR = "RAINRATE"
+forcing_name_SN = ""
+forcing_name_LF = "LQFRAC"
+
+/
