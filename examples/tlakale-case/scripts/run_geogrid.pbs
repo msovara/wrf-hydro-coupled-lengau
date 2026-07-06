@@ -1,0 +1,14 @@
+#!/bin/bash
+#PBS -N tlakale_geogrid
+#PBS -P ERTH0859
+#PBS -q serial
+#PBS -l select=1:ncpus=1:mpiprocs=1:nodetype=haswell_reg
+#PBS -l walltime=02:00:00
+#PBS -j oe
+#
+# Generate geo_em.d0*.nc for WRF-Hydro DOMAIN (static geography only).
+#
+set -euo pipefail
+
+EXAMPLE_DIR="${EXAMPLE_DIR:-/home/tmogebisa/lustre/WRF-Hydro_Coupled/examples/tlakale-case}"
+bash "${EXAMPLE_DIR}/scripts/run_geogrid.sh"

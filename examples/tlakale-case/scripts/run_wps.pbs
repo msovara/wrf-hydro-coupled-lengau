@@ -26,6 +26,7 @@ module load "${WRF_MODULE}"
 cd "${WPS_CASE_DIR}"
 
 ln -sf "${WPS_DIR}/geogrid.exe" ./geogrid.exe 2>/dev/null || true
+ln -sf "${WPS_ROOT}/geogrid/GEOGRID.TBL" ./GEOGRID.TBL 2>/dev/null || true
 ln -sf "${WPS_DIR}/ungrib.exe" ./ungrib.exe 2>/dev/null || true
 ln -sf "${WPS_DIR}/metgrid.exe" ./metgrid.exe 2>/dev/null || true
 ln -sf "${WPS_DIR}/link_grib.csh" ./link_grib.csh 2>/dev/null || true

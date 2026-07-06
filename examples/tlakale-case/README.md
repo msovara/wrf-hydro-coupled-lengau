@@ -121,9 +121,37 @@ Restarts are archived automatically at end of each `run_wrf.pbs` year job under 
 
 ### 4. Routing GIS (required)
 
-Place under `cases/my_hydro_run/DOMAIN/`:
+**Step A — geo_em from geogrid (no ERA5 needed):**
+```bash
+qsub scripts/run_geogrid.pbs
+# creates DOMAIN/geo_em.d01.nc and geo_em.d02.nc
+```
 
-- `geo_em.d01.nc`, `Fulldom_hires.nc`, `hydro2dtbl.nc`, `Route_Link.nc`, etc.
+**Step B — install GIS preprocessor (DTN or any host with internet):**
+```bash
+bash scripts/setup_gis_env.sh
+source gis/activate_gis_env.sh
+```
+
+**Step C — obtain a hydrologically conditioned DEM** (metres) covering the domain. After geogrid:
+```bash
+python scripts/geo_em_bounds.py cases/my_hydro_run/DOMAIN/geo_em.d01.nc
+```
+Download MERIT/Copernicus DEM for that bbox (e.g. from [MERIT Hydro](http://hydro.iis.u-tokyo.ac.jp/~yamadai/MERIT_DEM/) or OpenTopography), place as `dem/inkomati_dem.tif`.
+
+**Step D — build routing stack:**
+```bash
+qsub -v DEM_PATH=/home/tmogebisa/lustre/WRF-Hydro_Coupled/dem/inkomati_dem.tif scripts/run_gis_preproc.pbs
+```
+
+This produces in `DOMAIN/`:
+`Fulldom_hires.nc`, `hydro2dtbl.nc`, `Route_Link.nc`, `GEOGRID_LDASOUT_Spatial_Metadata.nc`, `GWBASINS.nc`, `GWBUCKPARM.nc`, `LAKEPARM.nc` (as applicable).
+
+| Script | Purpose |
+|--------|---------|
+| `run_geogrid.sh` / `.pbs` | WPS geogrid → `geo_em.d0*.nc` |
+| `setup_gis_env.sh` | Clone NCAR GIS tool + conda env |
+| `run_gis_preproc.sh` / `.pbs` | DEM + geo_em → routing files |
 
 ## Phase 1 namelist settings
 

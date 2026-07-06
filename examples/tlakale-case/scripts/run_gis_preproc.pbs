@@ -1,0 +1,16 @@
+#!/bin/bash
+#PBS -N tlakale_gis
+#PBS -P ERTH0859
+#PBS -q serial
+#PBS -l select=1:ncpus=8:mpiprocs=8:nodetype=haswell_reg
+#PBS -l walltime=12:00:00
+#PBS -j oe
+#
+# Build Fulldom_hires.nc, hydro2dtbl.nc, Route_Link.nc, etc.
+# Set DEM_PATH when submitting, e.g.:
+#   qsub -v DEM_PATH=/home/tmogebisa/lustre/WRF-Hydro_Coupled/dem/inkomati_dem.tif run_gis_preproc.pbs
+#
+set -euo pipefail
+
+EXAMPLE_DIR="${EXAMPLE_DIR:-/home/tmogebisa/lustre/WRF-Hydro_Coupled/examples/tlakale-case}"
+bash "${EXAMPLE_DIR}/scripts/run_gis_preproc.sh"
