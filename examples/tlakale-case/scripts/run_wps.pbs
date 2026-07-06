@@ -1,13 +1,13 @@
 #!/bin/bash
 #PBS -N tlakale_wps
 #PBS -P ERTH0859
-#PBS -q normal
-#PBS -l select=1:ncpus=8:mpiprocs=8:nodetype=haswell_reg
+#PBS -q serial
+#PBS -l select=1:ncpus=16:mpiprocs=16:nodetype=haswell_reg
 #PBS -l walltime=08:00:00
 #PBS -j oe
 #
-# Phase 1 WPS: geogrid -> ungrib -> metgrid for test month or one year.
-# Prerequisite: ERA5 GRIB in ERA5_GRIB_DIR/ERA5_${RUN_YEAR}_*.grib (or test period).
+# Phase 1 WPS on the serial queue (1–23 cores, 48 h max).
+# normal queue requires >=25 cores and is not valid for small WPS jobs.
 #
 set -euo pipefail
 
@@ -31,7 +31,7 @@ ln -sf "${WPS_DIR}/metgrid.exe" ./metgrid.exe 2>/dev/null || true
 ln -sf "${WPS_DIR}/link_grib.csh" ./link_grib.csh 2>/dev/null || true
 
 echo "=== geogrid (Phase 1, ${SIM_MODE}, year=${RUN_YEAR}) ==="
-./geogrid.exe
+mpirun -np "${NP_WPS}" ./geogrid.exe
 
 echo "=== ungrib ==="
 if [[ "${SIM_MODE}" == "test" ]]; then
@@ -42,7 +42,7 @@ fi
 ./ungrib.exe
 
 echo "=== metgrid ==="
-./metgrid.exe
+mpirun -np "${NP_WPS}" ./metgrid.exe
 
 ls -la met_em.d0*.nc 2>/dev/null | head -5
 echo "=== WPS complete ==="

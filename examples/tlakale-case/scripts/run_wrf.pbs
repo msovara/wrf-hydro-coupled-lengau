@@ -3,14 +3,12 @@
 #PBS -P ERTH0859
 #PBS -q normal
 #PBS -l select=2:ncpus=24:mpiprocs=24:nodetype=haswell_reg
-#PBS -l walltime=120:00:00
+#PBS -l walltime=48:00:00
 #PBS -j oe
 #
-# Phase 1 coupled WRF-Hydro run (one calendar year or test month).
-# Examples:
-#   qsub -v SIM_MODE=test scripts/run_wrf.pbs
-#   qsub -v SIM_MODE=year,RUN_YEAR=1980,RESTART=false scripts/run_wrf.pbs
-#   qsub -v SIM_MODE=year,RUN_YEAR=1981,RESTART=true,PREV_YEAR=1980 scripts/run_wrf.pbs
+# Phase 1 coupled WRF-Hydro on the normal queue (25–240 cores, 48 h max).
+# If a full year exceeds 48 h, stop with restart=.true. and continue in a
+# second job (or split the year into seasons in the namelist).
 #
 set -euo pipefail
 
@@ -34,10 +32,9 @@ module load "${WRF_MODULE}"
 
 cd "${CASE_DIR}"
 
-echo "=== Phase 1 coupled WRF-Hydro ==="
+echo "=== Phase 1 coupled WRF-Hydro (normal queue, 48 h max) ==="
 echo "CASE_DIR=${CASE_DIR}"
 echo "SIM_MODE=${SIM_MODE} RUN_YEAR=${RUN_YEAR} RESTART=${RESTART}"
-echo "WRF_ROOT=${WRF_ROOT}"
 date
 
 mpirun -np "${NP_WRF}" wrf.exe

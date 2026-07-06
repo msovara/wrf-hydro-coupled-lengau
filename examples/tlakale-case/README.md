@@ -47,7 +47,7 @@ tlakale-case/
     prepare_year_restart.sh       link previous year wrfrst
     archive_year_restart.sh       save end-of-year restarts
     link_met_em.sh
-    run_wps.pbs / run_real.pbs / run_wrf.pbs
+    run_wps.pbs / run_real.pbs / run_wrf.pbs / run_wrf_test.pbs
     run_phase1_years.sh           submit 1980–2010 chain
 ```
 
@@ -63,6 +63,19 @@ Paths are preset in `config.env` for Lengau:
 | `WPS_DIR` | `/home/apps/chpc/earth/WRF-4.7.1-gcc/bin` |
 | `GEOG_DATA_PATH` | `/home/apps/chpc/earth/CROCCO_Workshop/geog/WPS_GEOG` |
 | `CASE_ROOT` | `/home/tmogebisa/lustre/WRF-Hydro_Coupled/cases/my_hydro_run` |
+
+## CHPC Lengau queues (ERTH0859)
+
+| Stage | Queue | Cores | Walltime | Script |
+|-------|-------|-------|----------|--------|
+| WPS | **serial** | 16 (max 23) | 8 h | `run_wps.pbs` |
+| real.exe | **normal** | 48 (min 25) | 8 h | `run_real.pbs` |
+| wrf.exe (test/production) | **normal** | 48 | 48 h max | `run_wrf.pbs` |
+| Smoke test only | **test** | 24 | 3 h max | `run_wrf_test.pbs` |
+
+**Important:** the **normal** queue allows at most **48 h** per job. A full calendar year may not finish in one job — use `restart=.true.` and chain jobs, or split into seasons (e.g. Jan–Jun / Jul–Dec) in the namelist.
+
+Do **not** submit WPS to **normal** (minimum 25 cores per job).
 
 ```bash
 cd /home/tmogebisa/lustre/WRF-Hydro_Coupled/tlakale-case

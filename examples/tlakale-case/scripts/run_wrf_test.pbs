@@ -1,0 +1,32 @@
+#!/bin/bash
+#PBS -N tlakale_wrf_test
+#PBS -P ERTH0859
+#PBS -q test
+#PBS -l select=1:ncpus=24:mpiprocs=24:nodetype=haswell_reg
+#PBS -l walltime=03:00:00
+#PBS -j oe
+#
+# Short smoke test on the test queue (max 3 h, 1 job in queue).
+# Use only to verify the job starts; run the full Jan 2010 test on normal.
+#
+set -euo pipefail
+
+EXAMPLE_DIR="${EXAMPLE_DIR:-/home/tmogebisa/lustre/WRF-Hydro_Coupled/examples/tlakale-case}"
+# shellcheck source=/dev/null
+source "${EXAMPLE_DIR}/config.env"
+
+SIM_MODE=test
+RESTART=false
+
+bash "${EXAMPLE_DIR}/scripts/apply_namelists.sh"
+
+module purge
+module load "${WRF_MODULE}"
+
+cd "${CASE_DIR}"
+
+echo "=== WRF-Hydro smoke test (test queue, 3 h max) ==="
+date
+mpirun -np "${NP_WRF_TEST}" wrf.exe
+echo "=== done ==="
+date
