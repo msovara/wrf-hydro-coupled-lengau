@@ -55,9 +55,18 @@ tlakale-case/
 
 ### 1. Configure
 
+Paths are preset in `config.env` for Lengau:
+
+| Variable | Value |
+|----------|-------|
+| `PBS_PROJECT` | `ERTH0859` |
+| `WPS_DIR` | `/home/apps/chpc/earth/WRF-4.7.1-gcc/bin` |
+| `GEOG_DATA_PATH` | `/home/apps/chpc/earth/CROCCO_Workshop/geog/WPS_GEOG` |
+| `CASE_ROOT` | `/home/tmogebisa/lustre/WRF-Hydro_Coupled/cases/my_hydro_run` |
+
 ```bash
-cd /home/tmogebisa/lustre/WRF-Hydro_Coupled/examples/tlakale-case
-nano config.env   # set PBS_PROJECT, GEOG_DATA_PATH, WPS_DIR
+cd /home/tmogebisa/lustre/WRF-Hydro_Coupled/tlakale-case
+nano config.env   # only if paths or queue need changing
 ```
 
 ### 2. Test (January 2010)
