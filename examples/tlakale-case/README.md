@@ -1,151 +1,119 @@
 # Tlakale case — Inkomati River catchment WRF-Hydro Phase 1
 
-Coupled WRF-Hydro namelists and PBS scripts for the **Inkomati basin** water-balance study (1980–2010), designed for **CHPC Lengau** with module `chpc/earth/wrf-lengau-gcc-hydro`.
+Coupled WRF-Hydro namelists and PBS scripts for the **Inkomati basin** water-balance study (**1980–2010**), on **CHPC Lengau** with module `chpc/earth/wrf-lengau-gcc-hydro`.
 
-## Domain summary
+## Phase 1 strategy
+
+| Step | Period | Purpose |
+|------|--------|---------|
+| **Test** | Jan 2010 | Verify WPS → real → wrf workflow |
+| **Production** | 1980–2010 | One calendar year per job, daily restarts, chain years |
+
+Do **not** run 30 years in a single job.
+
+## Domain
 
 | Domain | Resolution | Grid | Role |
 |--------|------------|------|------|
-| d01 | 15 km | 150 × 130 | Regional (southern Africa / Mozambique border) |
-| d02 | 5 km (÷3 nest) | 220 × 214 | Inkomati catchment focus |
+| d01 | 15 km | 150 × 130 | Regional |
+| d02 | 5 km (÷3) | 220 × 214 | Inkomati catchment |
 
-Map centre: **25.5°S, 31.5°E** (Lambert conformal).
+Centre: **25.5°S, 31.5°E** · LSM: **NoahMP** · History: **hourly** · WRF timestep: **60 s**
+
+## Layout on Lengau (tmogebisa)
+
+```
+/home/tmogebisa/lustre/WRF-Hydro_Coupled/
+  examples/tlakale-case/          ← namelists + scripts (this package)
+  cases/my_hydro_run/             ← WRF case (namelist.input, hydro.namelist, DOMAIN/)
+  cases/wps/                      ← WPS namelist.wps, met_em output
+  era5_grib/                      ← ERA5 forcing per year
+  restarts/                       ← archived wrfrst per year (1980, 1981, …)
+```
 
 ## Files
 
 ```
-examples/tlakale-case/
-  config.env                          # paths, project, LSM choice
+tlakale-case/
+  config.env                      Phase 1 paths and year range (1980–2010)
   namelists/
-    namelist.input.test               # Jan 2010 workflow test
-    namelist.input.year               # one calendar year (__YEAR__ placeholder)
-    namelist.wps.test                 # WPS for Jan 2010
-    namelist.wps.year                 # WPS for one year
-    namelist.hrldas.noahmp            # NoahMP physics (recommended)
-    namelist.hrldas.noah              # Noah physics (alternative)
+    namelist.input.test           Jan 2010 test
+    namelist.input.year           one calendar year template
+    namelist.wps.test / .year
+    namelist.hrldas.noahmp
   scripts/
-    setup_case.sh                     # create dirs, link tables, patch hydro.namelist
-    apply_namelists.sh                # install test or year namelists
-    patch_hydro_namelist.sh           # sys_cpl=2, water-balance outputs
-    link_met_em.sh                    # WPS → WRF met_em link
-    run_wps.pbs
-    run_real.pbs
-    run_wrf.pbs
-    run_phase1_years.sh               # 1980–2010 year loop
+    apply_namelists.sh            deploy namelists + patch hydro
+    patch_hydro_namelist.sh       sys_cpl=2, hourly water-balance outputs
+    prepare_year_restart.sh       link previous year wrfrst
+    archive_year_restart.sh       save end-of-year restarts
+    link_met_em.sh
+    run_wps.pbs / run_real.pbs / run_wrf.pbs
+    run_phase1_years.sh           submit 1980–2010 chain
 ```
 
-## Quick start on Lengau
+## Workflow
 
-### 1. Edit configuration
+### 1. Configure
 
 ```bash
-cd ~/wrf-hydro-coupled-lengau/examples/tlakale-case
-nano config.env
+cd /home/tmogebisa/lustre/WRF-Hydro_Coupled/examples/tlakale-case
+nano config.env   # set PBS_PROJECT, GEOG_DATA_PATH, WPS_DIR
 ```
 
-Set at minimum:
-
-- `PBS_PROJECT` — your CHPC project code
-- `GEOG_DATA_PATH` — path to WPS static geography (confirm on Lengau)
-- `WPS_DIR` — your compiled WPS install
-- `CASE_ROOT` — where case data will live (default `~/cases/tlakale_case`)
-
-### 2. Create case directory
+### 2. Test (January 2010)
 
 ```bash
-bash scripts/setup_case.sh
-```
-
-This creates `~/cases/tlakale_case/wrf` and `~/cases/tlakale_case/wps`, links WRF/Hydro tables, and patches `hydro.namelist` for **coupled** mode (`sys_cpl = 2`).
-
-### 3. Prepare routing GIS (required before hydro routing works)
-
-Place preprocessed WRF-Hydro domain files under `CASE_DIR/DOMAIN/`:
-
-- `geo_em.d01.nc` (from WPS `geogrid`)
-- `Fulldom_hires.nc`, `hydro2dtbl.nc`, `Route_Link.nc`, etc.
-
-See WRF-Hydro GIS pre-processing documentation. Without these, the atmospheric run may start but routing will fail.
-
-### 4. Test run (January 2010)
-
-```bash
-# Apply namelists
 SIM_MODE=test bash scripts/apply_namelists.sh
+bash scripts/patch_hydro_namelist.sh \
+  /home/tmogebisa/lustre/WRF-Hydro_Coupled/cases/my_hydro_run/hydro.namelist
 
-# WPS (after ERA5 GRIB in ERA5_GRIB_DIR)
-qsub scripts/run_wps.pbs
-
-# Link met_em and run real + wrf
-bash scripts/link_met_em.sh
-qsub scripts/run_real.pbs
+qsub -v SIM_MODE=test scripts/run_wps.pbs
+qsub -v SIM_MODE=test scripts/run_real.pbs
 qsub -v SIM_MODE=test scripts/run_wrf.pbs
 ```
 
-### 5. Phase 1 production (1980–2010)
+### 3. Phase 1 production (1980–2010)
 
-Run **one year per job** with restarts — do not attempt a single 30-year simulation.
+One year at a time. Place ERA5 for each year in `era5_grib/ERA5_1980_*.grib`, etc.
 
+**First year (cold start):**
 ```bash
-# Example: first year
-SIM_MODE=year RUN_YEAR=1980 RESTART=false bash scripts/apply_namelists.sh
-# WPS for 1980 ERA5, then real, then:
+qsub -v SIM_MODE=year,RUN_YEAR=1980,RESTART=false scripts/run_wps.pbs
+# after WPS completes:
+qsub -v SIM_MODE=year,RUN_YEAR=1980,RESTART=false scripts/run_real.pbs
 qsub -v SIM_MODE=year,RUN_YEAR=1980,RESTART=false scripts/run_wrf.pbs
+```
 
-# Subsequent years (after copying restart/wrfinput from previous year end)
-qsub -v SIM_MODE=year,RUN_YEAR=1981,RESTART=true scripts/run_wrf.pbs
+**Subsequent years (restart from previous):**
+```bash
+qsub -v SIM_MODE=year,RUN_YEAR=1981,RESTART=true,PREV_YEAR=1980 scripts/run_wrf.pbs
+```
 
-# Or preview all submit commands:
-bash scripts/run_phase1_years.sh
+Or submit the full chain (WRF only, assumes WPS/real already done or chained separately):
+```bash
 bash scripts/run_phase1_years.sh submit
+bash scripts/run_phase1_years.sh submit-all   # WPS+real+WRF per year
 ```
 
-## Namelist highlights
+Restarts are archived automatically at end of each `run_wrf.pbs` year job under `restarts/YYYY/`.
 
-### `namelist.input`
+### 4. Routing GIS (required)
 
-- **Test:** 2010-01-01 → 2010-01-31, hourly history (`interval_seconds = 3600`)
-- **Year:** `__YEAR__`-01-01 → `__YEAR__`-12-31
-- **LSM:** NoahMP (`sf_surface_physics = 5`) — switch to Noah (`2`) via `LSM_OPTION=noah` in `apply_namelists.sh`
-- **Timestep:** 60 s (safer for 5 km nest)
-- **Nested boundaries:** `specified = .true., .false.` and `nested = .false., .true.`
-- **`&hydro`:** routing enabled; closing `/` included
+Place under `cases/my_hydro_run/DOMAIN/`:
 
-### `hydro.namelist`
+- `geo_em.d01.nc`, `Fulldom_hires.nc`, `hydro2dtbl.nc`, `Route_Link.nc`, etc.
 
-Copied from the install and patched by `patch_hydro_namelist.sh`:
+## Phase 1 namelist settings
 
-- `sys_cpl = 2` (coupled to WRF, not offline)
-- `SPLIT_OUTPUT_COUNT = 1` (required for coupled)
-- `LSMOUT_DOMAIN = 1`, `RTOUT_DOMAIN = 1`, `CHRTOUT_DOMAIN = 1` for water-balance fluxes
+| Setting | Value | File |
+|---------|-------|------|
+| Analysis period | 1980–2010 | `config.env` |
+| Output interval | 3600 s (hourly) | `namelist.input.*` |
+| WRF restart interval | 1440 min (daily) | `namelist.input.year` |
+| Hydro output | 60 min | `hydro.namelist` (patched) |
+| Coupling | `sys_cpl = 2` | `hydro.namelist` (patched) |
+| LSM fluxes | `LSMOUT_DOMAIN = 1` | `hydro.namelist` (patched) |
 
-### `namelist.wps`
+## Storage
 
-Dates and grid must match `namelist.input`. `geog_data_path` is substituted from `GEOG_DATA_PATH` in `config.env`.
-
-### `namelist.hrldas`
-
-Physics options for NoahMP; dates are placeholders in coupled mode (WRF drives forcing). Keep `NOAH_TIMESTEP = 3600` aligned with WRF history interval.
-
-## Workflow diagram
-
-```
-ERA5 GRIB → WPS (geogrid/ungrib/metgrid) → met_em.*
-                                              ↓
-                                         real.exe → wrfinput, wrfbdy
-                                              ↓
-                    DOMAIN/* (GIS) + hydro.namelist + namelist.hrldas
-                                              ↓
-                                         wrf.exe (coupled WRF-Hydro)
-                                              ↓
-                              wrfout_* + CHRTOUT/RTOUT/LSMOUT (water balance)
-```
-
-## Storage note
-
-30 years at 5 km with hourly output is very large. Plan post-processing to daily means and subset variables after each year completes.
-
-## Related documentation
-
-- [USER_GUIDE.md](../../docs/USER_GUIDE.md) — coupled build on Lengau
-- [run_wrf_coupled.pbs](../run_wrf_coupled.pbs) — generic coupled PBS template
+Hourly 5 km output for 31 years is very large. Archive daily means after each year in post-processing.

@@ -108,4 +108,5 @@
  hydro_dt                            = 300,
  routing_overland                    = 1,
  routing_channel                     = 1,
+ routing_groundwater                 = 1,
 /

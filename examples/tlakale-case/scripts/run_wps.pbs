@@ -3,32 +3,46 @@
 #PBS -P YOUR_PROJECT
 #PBS -q normal
 #PBS -l select=1:ncpus=8:mpiprocs=8:nodetype=haswell_reg
-#PBS -l walltime=04:00:00
+#PBS -l walltime=08:00:00
 #PBS -j oe
 #
-# WPS workflow: geogrid -> ungrib -> metgrid
-# Prerequisite: ERA5 GRIB files in ERA5_GRIB_DIR; edit config.env first.
+# Phase 1 WPS: geogrid -> ungrib -> metgrid for test month or one year.
+# Prerequisite: ERA5 GRIB in ERA5_GRIB_DIR/ERA5_${RUN_YEAR}_*.grib (or test period).
 #
 set -euo pipefail
 
-EXAMPLE_DIR="${EXAMPLE_DIR:-${HOME}/wrf-hydro-coupled-lengau/examples/tlakale-case}"
+EXAMPLE_DIR="${EXAMPLE_DIR:-/home/tmogebisa/lustre/WRF-Hydro_Coupled/examples/tlakale-case}"
 # shellcheck source=/dev/null
 source "${EXAMPLE_DIR}/config.env"
+
+SIM_MODE="${SIM_MODE:-year}"
+RUN_YEAR="${RUN_YEAR:-${PHASE1_START_YEAR}}"
+
+bash "${EXAMPLE_DIR}/scripts/apply_namelists.sh"
 
 module purge
 module load "${WRF_MODULE}"
 
 cd "${WPS_CASE_DIR}"
 
-echo "=== geogrid ==="
+ln -sf "${WPS_DIR}/geogrid.exe" ./geogrid.exe 2>/dev/null || true
+ln -sf "${WPS_DIR}/ungrib.exe" ./ungrib.exe 2>/dev/null || true
+ln -sf "${WPS_DIR}/metgrid.exe" ./metgrid.exe 2>/dev/null || true
+ln -sf "${WPS_DIR}/link_grib.csh" ./link_grib.csh 2>/dev/null || true
+
+echo "=== geogrid (Phase 1, ${SIM_MODE}, year=${RUN_YEAR}) ==="
 ./geogrid.exe
 
 echo "=== ungrib ==="
-./link_grib.csh "${ERA5_GRIB_DIR}"/ERA5_*
+if [[ "${SIM_MODE}" == "test" ]]; then
+  ./link_grib.csh "${ERA5_GRIB_DIR}"/ERA5_${TEST_YEAR}_*.grib
+else
+  ./link_grib.csh "${ERA5_GRIB_DIR}"/ERA5_${RUN_YEAR}_*.grib
+fi
 ./ungrib.exe
 
 echo "=== metgrid ==="
 ./metgrid.exe
 
-echo "=== WPS complete ==="
 ls -la met_em.d0*.nc 2>/dev/null | head -5
+echo "=== WPS complete ==="

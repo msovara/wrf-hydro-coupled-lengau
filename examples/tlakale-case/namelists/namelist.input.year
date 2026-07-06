@@ -17,6 +17,7 @@
  frames_per_outfile                  = 744, 744,
  restart                             = __RESTART__,
  restart_interval                    = 1440,
+ write_hist_at_0h_rst                = .true.,
  io_form_history                     = 2,
  io_form_restart                     = 2,
  io_form_input                       = 2,
@@ -108,4 +109,5 @@
  hydro_dt                            = 300,
  routing_overland                    = 1,
  routing_channel                     = 1,
+ routing_groundwater                 = 1,
 /

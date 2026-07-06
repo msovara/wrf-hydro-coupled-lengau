@@ -1,17 +1,20 @@
 #!/bin/bash
-# Apply test or yearly namelists to the case directory.
+# Apply Phase 1 namelists to the WRF and WPS case directories.
+#
 #   SIM_MODE=test  bash apply_namelists.sh
 #   SIM_MODE=year RUN_YEAR=1980 RESTART=false bash apply_namelists.sh
+#
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EXAMPLE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+NAMELIST_DIR="${EXAMPLE_DIR}/namelists"
 
 # shellcheck source=/dev/null
 source "${EXAMPLE_DIR}/config.env"
 
 SIM_MODE="${SIM_MODE:-test}"
-RUN_YEAR="${RUN_YEAR:-1980}"
+RUN_YEAR="${RUN_YEAR:-${PHASE1_START_YEAR}}"
 RESTART="${RESTART:-false}"
 LSM_OPTION="${LSM_OPTION:-noahmp}"
 
@@ -29,17 +32,19 @@ apply_sed() {
       "${src}" > "${dst}"
 }
 
+mkdir -p "${CASE_DIR}" "${WPS_CASE_DIR}"
+
 case "${SIM_MODE}" in
   test)
-    RUN_YEAR=2010
-    cp -f "${CASE_DIR}/namelist.input.test" "${CASE_DIR}/namelist.input"
-    apply_sed "${WPS_CASE_DIR}/namelist.wps.test" "${WPS_CASE_DIR}/namelist.wps"
-    apply_sed "${CASE_DIR}/namelist.hrldas.noahmp" "${CASE_DIR}/namelist.hrldas"
+    RUN_YEAR="${TEST_YEAR}"
+    cp -f "${NAMELIST_DIR}/namelist.input.test" "${CASE_DIR}/namelist.input"
+    apply_sed "${NAMELIST_DIR}/namelist.wps.test" "${WPS_CASE_DIR}/namelist.wps"
+    apply_sed "${NAMELIST_DIR}/namelist.hrldas.noahmp" "${CASE_DIR}/namelist.hrldas"
     ;;
   year)
-    apply_sed "${CASE_DIR}/namelist.input.year" "${CASE_DIR}/namelist.input"
-    apply_sed "${WPS_CASE_DIR}/namelist.wps.year" "${WPS_CASE_DIR}/namelist.wps"
-    apply_sed "${CASE_DIR}/namelist.hrldas.noahmp" "${CASE_DIR}/namelist.hrldas"
+    apply_sed "${NAMELIST_DIR}/namelist.input.year" "${CASE_DIR}/namelist.input"
+    apply_sed "${NAMELIST_DIR}/namelist.wps.year" "${WPS_CASE_DIR}/namelist.wps"
+    apply_sed "${NAMELIST_DIR}/namelist.hrldas.noahmp" "${CASE_DIR}/namelist.hrldas"
     ;;
   *)
     echo "ERROR: SIM_MODE must be 'test' or 'year' (got ${SIM_MODE})"
@@ -49,10 +54,14 @@ esac
 
 if [[ "${LSM_OPTION}" == "noah" ]]; then
   sed -i 's/sf_surface_physics[[:space:]]*=[[:space:]]*5,[[:space:]]*5,/sf_surface_physics                  =  2,     2,/' "${CASE_DIR}/namelist.input"
-  apply_sed "${CASE_DIR}/namelist.hrldas.noah" "${CASE_DIR}/namelist.hrldas"
+  apply_sed "${NAMELIST_DIR}/namelist.hrldas.noah" "${CASE_DIR}/namelist.hrldas"
 fi
 
-echo "Applied SIM_MODE=${SIM_MODE} RUN_YEAR=${RUN_YEAR} RESTART=${RESTART}"
+if [[ -f "${CASE_DIR}/hydro.namelist" ]]; then
+  bash "${SCRIPT_DIR}/patch_hydro_namelist.sh" "${CASE_DIR}/hydro.namelist"
+fi
+
+echo "Applied Phase 1 namelists: SIM_MODE=${SIM_MODE} RUN_YEAR=${RUN_YEAR} RESTART=${RESTART}"
 echo "  ${CASE_DIR}/namelist.input"
 echo "  ${WPS_CASE_DIR}/namelist.wps"
 echo "  ${CASE_DIR}/namelist.hrldas"
