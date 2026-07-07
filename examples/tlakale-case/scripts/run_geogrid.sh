@@ -27,6 +27,8 @@ module load "${WRF_MODULE}"
 
 cd "${WPS_CASE_DIR}"
 ln -sf "${WPS_DIR}/geogrid.exe" ./geogrid.exe
+mkdir -p geogrid
+ln -sf "${WPS_ROOT}/geogrid/GEOGRID.TBL" ./geogrid/GEOGRID.TBL
 ln -sf "${WPS_ROOT}/geogrid/GEOGRID.TBL" ./GEOGRID.TBL
 
 echo "=== geogrid ==="

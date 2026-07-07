@@ -1,32 +1,37 @@
 #!/bin/bash
-# Clone WRF-Hydro GIS preprocessor and create conda env (run on DTN or machine with internet).
+# Set up WRF-Hydro GIS preprocessor from bundled copy (no internet required).
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EXAMPLE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 GIS_ROOT="${EXAMPLE_DIR}/gis"
+BUNDLE="${GIS_ROOT}/wrf_hydro_gis_preprocessor"
 
-mkdir -p "${GIS_ROOT}"
-cd "${GIS_ROOT}"
-
-if [[ ! -d wrf_hydro_gis_preprocessor ]]; then
-  git clone https://github.com/NCAR/wrf_hydro_gis_preprocessor.git
+if [[ ! -d "${BUNDLE}/wrfhydro_gis" ]]; then
+  echo "ERROR: Bundled GIS tool not found at ${BUNDLE}"
+  echo "On a PC with internet, from tlakale-case/gis run:"
+  echo "  git clone --depth 1 https://github.com/NCAR/wrf_hydro_gis_preprocessor.git"
+  echo "Then scp the whole tlakale-case folder to Lengau."
+  exit 1
 fi
 
 module load chpc/python/anaconda/3-2024.10.1 2>/dev/null || true
 
-if ! conda env list | grep -q wrfh_gis_env; then
+if ! conda env list 2>/dev/null | grep -q wrfh_gis_env; then
+  echo "Creating conda env wrfh_gis_env (needs conda channels cached or offline mirror)..."
   conda create -y -n wrfh_gis_env -c conda-forge \
     python=3.10 gdal=3.6.3 netCDF4=1.6.3 numpy=1.24.2 pyproj=3.4.1 \
-    whitebox=2.3.5 packaging=23.0 shapely=2.0.1
+    whitebox=2.3.5 packaging=23.0 shapely=2.0.1 || {
+    echo "WARN: conda create failed (offline?). Use pre-built env or run once on DTN."
+  }
 fi
 
-cat > "${GIS_ROOT}/activate_gis_env.sh" << 'EOF'
+cat > "${GIS_ROOT}/activate_gis_env.sh" << EOF
 module load chpc/python/anaconda/3-2024.10.1 2>/dev/null || true
-source "$(conda info --base)/etc/profile.d/conda.sh"
+source "\$(conda info --base)/etc/profile.d/conda.sh"
 conda activate wrfh_gis_env
-export GIS_TOOL_DIR="${GIS_TOOL_DIR:-$(dirname "$0")/wrf_hydro_gis_preprocessor/wrfhydro_gis}"
+export GIS_TOOL_DIR="${BUNDLE}/wrfhydro_gis"
 EOF
 
-echo "GIS tools ready under ${GIS_ROOT}"
+echo "GIS tools: ${BUNDLE}/wrfhydro_gis"
 echo "Activate: source ${GIS_ROOT}/activate_gis_env.sh"

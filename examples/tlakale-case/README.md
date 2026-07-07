@@ -77,6 +77,10 @@ Paths are preset in `config.env` for Lengau:
 
 Do **not** submit WPS to **normal** (minimum 25 cores per job).
 
+## Offline cluster (no internet on Lengau)
+
+**All downloads and git operations must be done on your PC**, then uploaded via SCP. See **[OFFLINE_DEPLOY.md](OFFLINE_DEPLOY.md)** for the full workflow (GIS bundle, DEM, ERA5, deploy commands).
+
 ```bash
 cd /home/tmogebisa/lustre/WRF-Hydro_Coupled/tlakale-case
 nano config.env   # only if paths or queue need changing
