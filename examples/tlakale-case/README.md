@@ -250,7 +250,8 @@ After GIS preproc, `cases/my_hydro_run/DOMAIN/` should contain:
 |---------|-------|------|
 | Analysis period | 1980–2010 | `config.env` |
 | Test period | Jan 2010 → 31 Jan 18:00 | `namelist.*.test` |
-| Output interval | 3600 s (hourly) | `namelist.input.*` |
+| Output interval | 3600 s (hourly history) | `namelist.input.*` |
+| Boundary / met_em interval | 21600 s (6-hourly; must match WPS) | `namelist.input.*`, `namelist.wps.*` |
 | WRF restart interval | 1440 min (daily) | `namelist.input.year` |
 | Hydro output | 60 min | `hydro.namelist` (patched) |
 | Coupling | `sys_cpl = 2` | `hydro.namelist` (patched) |
@@ -264,6 +265,7 @@ After GIS preproc, `cases/my_hydro_run/DOMAIN/` should contain:
 | `diname: command not found` | CRLF in scripts — run `perl -pi -e 's/\r\n/\n/g' scripts/*.sh` |
 | `ERROR: Screwy NDATE: …_24:00:00` | Use `YYYY-MM-DD_00:00:00` or last 6-hourly time in GRIB |
 | `Data not found: 2010-02-01_00` | Download Feb 1 ERA5 or set WPS end to last Jan time (`_18:00:00`) |
+| `met_em …_01:00:00.nc` not found | Set `interval_seconds = 21600` in `namelist.input` to match WPS |
 | `Could not open GEOGRID.TBL` | `run_geogrid.sh` creates `geogrid/GEOGRID.TBL` symlink |
 | GIS conda fails on Lengau | Build routing stack on PC (`run_gis_preproc_local.py`) |
 | `real` exits immediately | Fixed in `link_met_em.sh` (`head` + `set -e` pipefail) |
