@@ -1,0 +1,17 @@
+# Local data and GIS outputs (download or generate on PC; SCP to Lengau)
+DOMAIN/*.nc
+DOMAIN/*.zip
+DOMAIN/*.log
+DOMAIN/*.shp
+DOMAIN/*.shx
+DOMAIN/*.dbf
+DOMAIN/*.prj
+DOMAIN/scratchdir/
+dem/
+era5_grib/
+geo_em.d01.nc
+
+# Windows / editor
+Thumbs.db
+*.pyc
+__pycache__/

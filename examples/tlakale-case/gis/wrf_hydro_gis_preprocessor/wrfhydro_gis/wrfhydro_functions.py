@@ -2683,6 +2683,8 @@ def Routing_Table(projdir, rootgrp, grid_obj, fdir, strm, Elev, Strahler, gages=
     print('          {0}'.format(missing_reach_IDs.tolist()))
     channel_arr = rootgrp.variables['CHANNELGRID'][:]
     strorder_arr = rootgrp.variables['STREAMORDER'][:]
+    if strorder_arr.dtype == numpy.int8:
+        strorder_arr = strorder_arr.astype(numpy.int32)
     for idVal in missing_reach_IDs:
         arr_mask = strm_link_arr==idVal         # Build a boolean mask for masking all array elements to be changed
         strm_link_arr[arr_mask] = NoDataVal     # Set all linkid values that didn't get resolved in the routelink file to nodata.

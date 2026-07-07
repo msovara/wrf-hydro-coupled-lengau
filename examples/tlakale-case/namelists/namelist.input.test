@@ -10,7 +10,7 @@
  end_year                            = 2010, 2010,
  end_month                           = 01,   01,
  end_day                             = 31,   31,
- end_hour                            = 00,   00,
+ end_hour                            = 18,   18,
  interval_seconds                    = 3600,
  input_from_file                     = .true., .true.,
  history_interval                    = 60,  60,

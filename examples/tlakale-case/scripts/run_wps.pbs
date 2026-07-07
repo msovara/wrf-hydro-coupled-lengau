@@ -5,6 +5,7 @@
 #PBS -l select=1:ncpus=16:mpiprocs=16:nodetype=haswell_reg
 #PBS -l walltime=08:00:00
 #PBS -j oe
+#PBS -o /home/tmogebisa/lustre/WRF-Hydro_Coupled/cases/wps/tlakale_wps.log
 #
 # Phase 1 WPS on the serial queue (1–23 cores, 48 h max).
 # normal queue requires >=25 cores and is not valid for small WPS jobs.
@@ -26,7 +27,11 @@ module load "${WRF_MODULE}"
 cd "${WPS_CASE_DIR}"
 
 ln -sf "${WPS_DIR}/geogrid.exe" ./geogrid.exe 2>/dev/null || true
+mkdir -p geogrid metgrid
+ln -sf "${WPS_ROOT}/geogrid/GEOGRID.TBL" ./geogrid/GEOGRID.TBL
 ln -sf "${WPS_ROOT}/geogrid/GEOGRID.TBL" ./GEOGRID.TBL 2>/dev/null || true
+ln -sf "${WPS_ROOT}/metgrid/METGRID.TBL" ./metgrid/METGRID.TBL
+ln -sf "${WPS_ROOT}/metgrid/METGRID.TBL" ./METGRID.TBL 2>/dev/null || true
 ln -sf "${WPS_DIR}/ungrib.exe" ./ungrib.exe 2>/dev/null || true
 ln -sf "${WPS_DIR}/metgrid.exe" ./metgrid.exe 2>/dev/null || true
 ln -sf "${WPS_DIR}/link_grib.csh" ./link_grib.csh 2>/dev/null || true
@@ -35,6 +40,9 @@ echo "=== geogrid (Phase 1, ${SIM_MODE}, year=${RUN_YEAR}) ==="
 mpirun -np "${NP_WPS}" ./geogrid.exe
 
 echo "=== ungrib ==="
+VTABLE="${WPS_ROOT}/ungrib/Variable_Tables/Vtable.ECMWF"
+[[ -f "${VTABLE}" ]] || VTABLE="${WPS_ROOT}/ungrib/Variable_Tables/Vtable.ERA-interim.pl"
+ln -sf "${VTABLE}" ./Vtable
 if [[ "${SIM_MODE}" == "test" ]]; then
   ./link_grib.csh "${ERA5_GRIB_DIR}"/ERA5_${TEST_YEAR}_*.grib
 else

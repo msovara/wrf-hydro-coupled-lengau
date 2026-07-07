@@ -1,110 +1,145 @@
 # Offline workflow — Lengau has no internet
 
-When the cluster cannot reach the internet, prepare everything on your **PC** (or DTN when available), then **SCP to Lengau** and **push to GitHub** from your PC.
-
-## What needs internet (do locally)
-
-| Item | Local action | Upload to Lengau |
-|------|--------------|------------------|
-| **This repo / scripts** | `git push` from PC | `scp -r tlakale-case` to lustre |
-| **GIS preprocessor** | Bundled under `gis/wrf_hydro_gis_preprocessor/` | Include in scp (no `git clone` on cluster) |
-| **ERA5 GRIB** | CDS / Copernicus download on PC | `scp` to `era5_grib/` |
-| **DEM GeoTIFF** | Download MERIT/Copernicus DEM for domain bbox | `scp` to `dem/inkomati_dem.tif` |
-| **Conda GIS env** | Optional: build on PC or use Lengau modules + pip offline wheelhouse | See `setup_gis_env.sh` |
-
-## What runs on Lengau only (no internet)
-
-- `geogrid`, `ungrib`, `metgrid`, `real.exe`, `wrf.exe` (use `/home/apps` installs + lustre data)
-- PBS jobs
-- `run_gis_preproc.sh` **after** GIS tool + DEM are uploaded
+When the cluster cannot reach the internet, prepare everything on your **PC**, then **SCP to Lengau**. Push script updates to GitHub from your PC only.
 
 ---
 
-## Deploy from Windows PC to tmogebisa lustre
+## What needs internet (do on PC)
 
-From PowerShell (replace paths if needed):
+| Item | Local action | Upload to Lengau |
+|------|--------------|------------------|
+| **Scripts / namelists** | `git pull` / edit / `git push` | `scp -r examples/tlakale-case` |
+| **GIS preprocessor** | Bundled under `gis/wrf_hydro_gis_preprocessor/` | Include in scp |
+| **Routing DOMAIN** | `run_gis_preproc_local.py` (recommended) | `scp DOMAIN/*.nc` to `cases/my_hydro_run/DOMAIN/` |
+| **ERA5 GRIB** | `download_era5_wps.py` + CDS | `scp` to `era5_grib/` |
+| **DEM GeoTIFF** | `download_dem_opentopo.py` or similar | `scp` to `dem/inkomati_dem.tif` |
+| **Conda GIS env** | `conda create -n wrfh_gis_env …` on PC | Not needed on Lengau if GIS run locally |
+
+---
+
+## What runs on Lengau only
+
+- `geogrid`, `ungrib`, `metgrid`, `real.exe`, `wrf.exe` (CHPC modules + lustre data)
+- PBS jobs
+- Optional: `run_gis_preproc.pbs` if offline conda env exists (usually fails — use PC instead)
+
+---
+
+## Deploy from Windows PC
 
 ```powershell
-# 1. Push code to GitHub (from your PC)
 cd C:\Users\MthethoSovara\tiny-media-analysis\wrf-lengau
+
+# Push to GitHub
 git add examples/tlakale-case/
 git commit -m "Update tlakale-case"
 git push origin main
 
-# 2. Upload package to Lengau (tmogebisa can then own her copy)
-scp -r examples/tlakale-case msovara@lengau.chpc.ac.za:/home/tmogebisa/lustre/WRF-Hydro_Coupled/
+# Upload package
+scp -r examples/tlakale-case msovara@lengau.chpc.ac.za:/home/tmogebisa/lustre/WRF-Hydro_Coupled/examples/
 
-# 3. Upload DEM when ready (large file)
+# Large data (separate)
 scp dem/inkomati_dem.tif msovara@lengau.chpc.ac.za:/home/tmogebisa/lustre/WRF-Hydro_Coupled/dem/
-
-# 4. Upload ERA5 for test month / years
 scp era5_grib/ERA5_2010_*.grib msovara@lengau.chpc.ac.za:/home/tmogebisa/lustre/WRF-Hydro_Coupled/era5_grib/
+scp DOMAIN/Fulldom_hires.nc DOMAIN/Route_Link.nc ... msovara@lengau.chpc.ac.za:.../cases/my_hydro_run/DOMAIN/
 ```
 
-On **login2**, tmogebisa should take ownership of her copy:
+**On Lengau after scp:**
 
 ```bash
-cp -r ~/lustre/WRF-Hydro_Coupled/tlakale-case ~/lustre/WRF-Hydro_Coupled/examples/
-chmod -R u+rwX ~/lustre/WRF-Hydro_Coupled/examples/tlakale-case
+perl -pi -e 's/\r\n/\n/g; s/\r/\n/g' ~/lustre/WRF-Hydro_Coupled/examples/tlakale-case/scripts/*.sh
+perl -pi -e 's/\r\n/\n/g; s/\r/\n/g' ~/lustre/WRF-Hydro_Coupled/examples/tlakale-case/scripts/*.pbs
 chmod +x ~/lustre/WRF-Hydro_Coupled/examples/tlakale-case/scripts/*.sh
-perl -pi -e 's/\r\n/\n/g' ~/lustre/WRF-Hydro_Coupled/examples/tlakale-case/scripts/*.sh
 ```
 
 ---
 
-## DEM download (local PC)
+## Domain bounds (for PC downloads)
 
-Domain centre ~ **25.5°S, 31.5°E**; d01 is ~2200 km × 1900 km (15 km grid). Use bounds from `geo_em.d01.nc` on Lengau:
+From `geo_em.d01.nc` on Lengau:
 
 ```bash
-module load chpc/python/anaconda/3-2024.10.1
-python scripts/geo_em_bounds.py cases/my_hydro_run/DOMAIN/geo_em.d01.nc
+bash scripts/get_domain_bounds.sh
 ```
 
-Download **hydrologically conditioned** DEM (metres), e.g.:
+Reference values (Jul 2026) are in `domain_bounds.env`:
 
-- [MERIT Hydro DEM](http://hydro.iis.u-tokyo.ac.jp/~yamadai/MERIT_DEM/)
-- [Copernicus DEM 30m](https://spacedata.copernicus.eu/)
-
-Save as `inkomati_dem.tif` and SCP to `WRF-Hydro_Coupled/dem/`.
-
----
-
-## GIS preprocessor on Lengau (offline)
-
-The repo includes `gis/wrf_hydro_gis_preprocessor/` — no cluster `git clone` needed.
-
-On Lengau login (uses existing Anaconda module):
-
-```bash
-cd ~/lustre/WRF-Hydro_Coupled/examples/tlakale-case
-bash scripts/setup_gis_env.sh   # creates conda env if not present; uses bundled gis/
-source gis/activate_gis_env.sh
 ```
-
-If conda create fails offline, ask CHPC support or create the env once on DTN and export:
-
-```bash
-conda env export -n wrfh_gis_env > wrfh_gis_env.yml   # on machine with internet
-# transfer yml + use conda env create -f wrfh_gis_env.yml on Lengau
-```
-
-Then:
-
-```bash
-qsub -v DEM_PATH=/home/tmogebisa/lustre/WRF-Hydro_Coupled/dem/inkomati_dem.tif scripts/run_gis_preproc.pbs
+lat_min=-34.1596  lat_max=-16.5047
+lon_min=19.4645   lon_max=43.5355
 ```
 
 ---
 
-## Current status checklist (tmogebisa)
+## ERA5 download (PC)
 
-| Step | Status |
-|------|--------|
+Requires `~/.cdsapirc` (Copernicus CDS) and `pip install cdsapi`.
+
+```powershell
+cd examples/tlakale-case
+python scripts/download_era5_wps.py --year 2010 --bounds-file domain_bounds.env `
+    --month-start 1 --month-end 1 --output-dir era5_grib
+```
+
+For a full calendar year, use `--month-start 1 --month-end 12` and set WPS `end_date` to `(year+1)-01-01_00:00:00` or ensure the last 6-hourly time exists in GRIB.
+
+**Never use `_24:00:00` in WPS dates.**
+
+---
+
+## DEM download (PC)
+
+**Recommended:** OpenTopography (one merged GeoTIFF, free API key):
+
+```powershell
+$env:OPENTOPO_API_KEY = "your_key"
+python scripts/download_dem_opentopo.py --bounds-file domain_bounds.env
+```
+
+**Interim testing only:** export from geogrid orography:
+
+```powershell
+python scripts/export_dem_from_geoem.py geo_em.d01.nc --output dem/inkomati_dem.tif
+```
+
+Production runs should use a hydrologically conditioned DEM (MERIT, Copernicus 30 m).
+
+---
+
+## GIS routing stack (PC — recommended)
+
+Lengau login nodes cannot reach conda-forge. Build on PC:
+
+```powershell
+conda create -n wrfh_gis_env -c conda-forge python=3.10 gdal netCDF4 numpy pyproj whitebox packaging shapely
+conda activate wrfh_gis_env
+
+scp msovara@lengau.chpc.ac.za:.../DOMAIN/geo_em.d01.nc .
+
+python scripts/run_gis_preproc_local.py --geo-em geo_em.d01.nc --dem dem/inkomati_dem.tif
+```
+
+Upload outputs:
+
+```powershell
+scp DOMAIN/Fulldom_hires.nc DOMAIN/Route_Link.nc `
+    DOMAIN/GEOGRID_LDASOUT_Spatial_Metadata.nc DOMAIN/GWBASINS.nc DOMAIN/GWBUCKPARM.nc `
+    msovara@lengau.chpc.ac.za:/home/tmogebisa/lustre/WRF-Hydro_Coupled/cases/my_hydro_run/DOMAIN/
+```
+
+---
+
+## Progress checklist
+
+| Step | Status (Jul 2026) |
+|------|-------------------|
 | WRF/Hydro tables in `my_hydro_run` | Done |
 | `hydro.namelist` coupled (`sys_cpl=2`) | Done |
-| `geo_em.d01/d02.nc` in DOMAIN | Done |
-| Routing files (Fulldom, Route_Link, …) | **Pending DEM + GIS job** |
-| Phase 1 `namelist.input` applied | **Run `apply_namelists.sh`** |
-| ERA5 GRIB on lustre | **Download locally + scp** |
-| GIS tool on lustre | **scp bundled `gis/` folder** |
+| `geo_em.d01/d02.nc` | Done |
+| Routing DOMAIN files | Done (PC build + scp) |
+| ERA5 Jan 2010 on lustre | Done |
+| WPS / metgrid Jan 2010 | Done |
+| `real.exe` | Run / verify |
+| Coupled WRF test | Pending |
+
+See **[README.md](README.md)** for the full user guide and troubleshooting.

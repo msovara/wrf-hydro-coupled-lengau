@@ -22,14 +22,31 @@ if ! conda env list 2>/dev/null | grep -q wrfh_gis_env; then
   conda create -y -n wrfh_gis_env -c conda-forge \
     python=3.10 gdal=3.6.3 netCDF4=1.6.3 numpy=1.24.2 pyproj=3.4.1 \
     whitebox=2.3.5 packaging=23.0 shapely=2.0.1 || {
-    echo "WARN: conda create failed (offline?). Use pre-built env or run once on DTN."
+    echo "WARN: conda create failed (offline?). Run GIS on your PC instead:"
+    echo "  python scripts/run_gis_preproc_local.py --geo-em geo_em.d01.nc --dem dem/inkomati_dem.tif"
+    echo "  scp DOMAIN/*.nc to cases/my_hydro_run/DOMAIN/ on Lengau"
   }
+fi
+
+GIS_ENV=""
+if conda env list 2>/dev/null | grep -q wrfh_gis_env; then
+  GIS_ENV="wrfh_gis_env"
+elif conda env list 2>/dev/null | grep -qE '/grib_env|grib_env'; then
+  echo "NOTE: wrfh_gis_env missing; trying grib_env if GDAL present."
+  GIS_ENV="grib_env"
 fi
 
 cat > "${GIS_ROOT}/activate_gis_env.sh" << EOF
 module load chpc/python/anaconda/3-2024.10.1 2>/dev/null || true
 source "\$(conda info --base)/etc/profile.d/conda.sh"
-conda activate wrfh_gis_env
+if conda env list 2>/dev/null | grep -q wrfh_gis_env; then
+  conda activate wrfh_gis_env
+elif conda env list 2>/dev/null | grep -q grib_env; then
+  conda activate grib_env
+else
+  echo "ERROR: no GIS conda env. Build routing stack on PC (run_gis_preproc_local.py)."
+  exit 1
+fi
 export GIS_TOOL_DIR="${BUNDLE}/wrfhydro_gis"
 EOF
 

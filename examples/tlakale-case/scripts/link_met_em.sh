@@ -11,4 +11,4 @@ source "${EXAMPLE_DIR}/config.env"
 cd "${CASE_DIR}"
 ln -sf "${WPS_CASE_DIR}"/met_em.d0*.nc .
 echo "Linked met_em files into ${CASE_DIR}"
-ls -la met_em.d0*.nc | head -5
+ls -la met_em.d0*.nc 2>/dev/null | head -5 || true

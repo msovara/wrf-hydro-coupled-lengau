@@ -27,6 +27,7 @@ fi
 apply_sed() {
   local src="$1" dst="$2"
   sed -e "s|__YEAR__|${RUN_YEAR}|g" \
+      -e "s|__NEXT_YEAR__|$((RUN_YEAR + 1))|g" \
       -e "s|__GEOG_DATA_PATH__|${GEOG_DATA_PATH}|g" \
       -e "s|__RESTART__|${RESTART_F}|g" \
       "${src}" > "${dst}"

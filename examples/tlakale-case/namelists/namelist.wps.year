@@ -2,7 +2,7 @@
  wrf_core = 'ARW',
  max_dom = 2,
  start_date = '__YEAR__-01-01_00:00:00', '__YEAR__-01-01_00:00:00',
- end_date   = '__YEAR__-12-31_24:00:00', '__YEAR__-12-31_24:00:00',
+ end_date   = '__NEXT_YEAR__-01-01_00:00:00', '__NEXT_YEAR__-01-01_00:00:00',
  interval_seconds = 21600
 /
 

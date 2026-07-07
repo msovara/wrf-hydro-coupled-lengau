@@ -21,6 +21,8 @@ module purge
 module load "${WRF_MODULE}"
 
 cd "${CASE_DIR}"
+ln -sf "${WRF_ROOT}/bin/real.exe" ./real.exe
+ln -sf "${WRF_ROOT}/bin/wrf.exe" ./wrf.exe
 
 echo "=== real.exe (NP=${NP_REAL}, Phase 1) ==="
 date
