@@ -25,6 +25,8 @@ bash "${EXAMPLE_DIR}/scripts/apply_namelists.sh"
 
 if [[ "${RESTART}" == "true" && -n "${PREV_YEAR}" ]]; then
   bash "${EXAMPLE_DIR}/scripts/prepare_year_restart.sh"
+elif [[ "${RESTART}" == "true" && "${SIM_MODE}" == "test" ]]; then
+  bash "${EXAMPLE_DIR}/scripts/prepare_test_restart.sh"
 fi
 
 module purge

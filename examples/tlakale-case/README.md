@@ -185,6 +185,14 @@ qsub -v SIM_MODE=test scripts/run_real.pbs
 qsub -v SIM_MODE=test scripts/run_wrf.pbs
 ```
 
+If the test exceeds **48 h** on the normal queue, daily restart files (`wrfrst_d0*`) are written every **1440 min**. Continue with:
+
+```bash
+qsub -v SIM_MODE=test,RESTART=true scripts/run_wrf.pbs
+```
+
+Requires `wrfrst_d01*` (and d02) in `cases/my_hydro_run/` from the partial run.
+
 ---
 
 ## Phase 1 production (1980–2010)
@@ -216,7 +224,7 @@ Year WPS templates use `end_date = 'YYYY+1-01-01_00:00:00'` (via `__NEXT_YEAR__`
 | Script | Purpose |
 |--------|---------|
 | `apply_namelists.sh` | Deploy test/year namelists + patch hydro |
-| `patch_hydro_namelist.sh` | `sys_cpl=2`, hourly hydro outputs |
+| `patch_hydro_namelist.sh` | `sys_cpl=2`, hydro outputs (hourly test / 3-hourly year) |
 | `get_domain_bounds.sh` | Bbox from `geo_em.d01.nc` (uses `ncdump`, no Python netCDF4) |
 | `download_era5_wps.py` | ERA5 GRIB for WPS (PC + CDS) |
 | `download_dem_opentopo.py` | Copernicus 30 m DEM via OpenTopography (PC) |

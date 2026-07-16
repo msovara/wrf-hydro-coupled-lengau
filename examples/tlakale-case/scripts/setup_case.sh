@@ -14,10 +14,23 @@ module load "${WRF_MODULE}"
 
 mkdir -p "${CASE_DIR}"/{DOMAIN,RESTART} "${WPS_CASE_DIR}" "${RESTART_ARCHIVE}"
 
-echo "=== Linking WRF run-time tables ==="
+WRF_RUN="${WRF_RUN:-${WRF_ROOT}/build/WRF/run}"
+[[ -d "${WRF_RUN}" ]] || WRF_RUN="${WRF_ROOT}/run"
+
+echo "=== Linking WRF run-time tables and auxiliary data ==="
 shopt -s nullglob
-for tbl in "${WRF_ROOT}/run"/*.TBL; do
+for tbl in "${WRF_RUN}"/*.TBL; do
   ln -sf "${tbl}" "${CASE_DIR}/$(basename "${tbl}")"
+done
+
+# WRF 4.4+ CONUS/RRTMG needs these in the case directory (not just .TBL files).
+ln -sf "${WRF_RUN}/CAMtr_volume_mixing_ratio.RCP4.5" "${CASE_DIR}/CAMtr_volume_mixing_ratio"
+for aux in ozone.formatted ozone_lat.formatted ozone_plev.formatted \
+             RRTMG_LW_DATA RRTMG_SW_DATA RRTMG_LW_DATA_DBL RRTMG_SW_DATA_DBL; do
+  [[ -f "${WRF_RUN}/${aux}" ]] && ln -sf "${WRF_RUN}/${aux}" "${CASE_DIR}/${aux}"
+done
+for clm in "${WRF_RUN}"/CLM_*; do
+  [[ -f "${clm}" ]] && ln -sf "${clm}" "${CASE_DIR}/$(basename "${clm}")"
 done
 
 HYDRO_SHARE="${WRF_ROOT}/share/wrf-hydro"

@@ -38,7 +38,7 @@ mkdir -p "${CASE_DIR}" "${WPS_CASE_DIR}"
 case "${SIM_MODE}" in
   test)
     RUN_YEAR="${TEST_YEAR}"
-    cp -f "${NAMELIST_DIR}/namelist.input.test" "${CASE_DIR}/namelist.input"
+    apply_sed "${NAMELIST_DIR}/namelist.input.test" "${CASE_DIR}/namelist.input"
     apply_sed "${NAMELIST_DIR}/namelist.wps.test" "${WPS_CASE_DIR}/namelist.wps"
     apply_sed "${NAMELIST_DIR}/namelist.hrldas.noahmp" "${CASE_DIR}/namelist.hrldas"
     ;;
@@ -58,8 +58,14 @@ if [[ "${LSM_OPTION}" == "noah" ]]; then
   apply_sed "${NAMELIST_DIR}/namelist.hrldas.noah" "${CASE_DIR}/namelist.hrldas"
 fi
 
+if [[ "${SIM_MODE}" == "year" ]]; then
+  # Align HRLDAS output with 3-hourly WRF history (180 min); forcing stays hourly
+  sed -i 's/^[[:space:]]*NOAH_TIMESTEP[[:space:]]*=.*/NOAH_TIMESTEP    = 10800/' "${CASE_DIR}/namelist.hrldas"
+  sed -i 's/^[[:space:]]*OUTPUT_TIMESTEP[[:space:]]*=.*/OUTPUT_TIMESTEP  = 10800/' "${CASE_DIR}/namelist.hrldas"
+fi
+
 if [[ -f "${CASE_DIR}/hydro.namelist" ]]; then
-  bash "${SCRIPT_DIR}/patch_hydro_namelist.sh" "${CASE_DIR}/hydro.namelist"
+  SIM_MODE="${SIM_MODE}" RESTART="${RESTART}" bash "${SCRIPT_DIR}/patch_hydro_namelist.sh" "${CASE_DIR}/hydro.namelist"
 fi
 
 echo "Applied Phase 1 namelists: SIM_MODE=${SIM_MODE} RUN_YEAR=${RUN_YEAR} RESTART=${RESTART}"
