@@ -31,11 +31,15 @@ for src in "${WRF_RST[@]}"; do
 done
 
 HYDRO_RST=( "${ARCHIVE}"/HYDRO_RST* "${ARCHIVE}"/RESTART* )
-for src in "${HYDRO_RST[@]}"; do
-  [[ -f "${src}" ]] || continue
-  mkdir -p RESTART
-  ln -sf "${src}" "RESTART/$(basename "${src}")"
-  echo "Linked RESTART/$(basename "${src}")"
-done
+if (( ${#HYDRO_RST[@]} > 0 )); then
+  for src in "${HYDRO_RST[@]}"; do
+    [[ -f "${src}" ]] || continue
+    mkdir -p RESTART
+    ln -sf "${src}" "RESTART/$(basename "${src}")"
+    echo "Linked RESTART/$(basename "${src}")"
+  done
+else
+  echo "NOTE: no hydro restart files in ${ARCHIVE} (continuing with WRF wrfrst only)"
+fi
 
 echo "Restart files ready in ${CASE_DIR} for RUN_YEAR=${RUN_YEAR}"
