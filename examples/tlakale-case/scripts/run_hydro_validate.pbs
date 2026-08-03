@@ -1,0 +1,43 @@
+#!/bin/bash
+#PBS -N tlakale_hydro_val
+#PBS -P ERTH0859
+#PBS -q normal
+#PBS -l select=2:ncpus=24:mpiprocs=24:nodetype=haswell_reg
+#PBS -l walltime=24:00:00
+#PBS -j oe
+#
+# Short coupled run (Jan 1–4 2010) to verify CHRTOUT / LSMOUT / RTOUT after hydro patch.
+#
+set -euo pipefail
+
+EXAMPLE_DIR="${EXAMPLE_DIR:-/home/tmogebisa/lustre/WRF-Hydro_Coupled/examples/tlakale-case}"
+# shellcheck source=/dev/null
+source "${EXAMPLE_DIR}/config.env"
+
+export SIM_MODE=hydro_val
+export RESTART=false
+
+# Re-patch from vendor template so route_link_f / RESTART_FILE fixes apply cleanly
+if [[ -f "${CASE_DIR}/hydro.namelist.orig" ]]; then
+  cp -f "${CASE_DIR}/hydro.namelist.orig" "${CASE_DIR}/hydro.namelist"
+fi
+
+bash "${EXAMPLE_DIR}/scripts/apply_namelists.sh"
+
+module purge
+module load "${WRF_MODULE}"
+
+cd "${CASE_DIR}"
+
+echo "=== Hydro validation: Jan 1–4 2010 cold start ==="
+echo "CASE_DIR=${CASE_DIR}"
+grep route_link_f hydro.namelist || true
+grep RESTART_FILE hydro.namelist || true
+grep GW_RESTART hydro.namelist || true
+date
+
+mpirun -np "${NP_WRF}" wrf.exe
+
+echo "=== wrf.exe complete — check hydro outputs ==="
+bash "${EXAMPLE_DIR}/scripts/check_hydro_outputs.sh"
+date

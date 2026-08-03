@@ -193,6 +193,19 @@ qsub -v SIM_MODE=test,RESTART=true scripts/run_wrf.pbs
 
 Requires `wrfrst_d01*` (and d02) in `cases/my_hydro_run/` from the partial run.
 
+### Hydro output check (Jan 1–4 validation)
+
+If `CHRTOUT` / `LSMOUT` / `RTOUT` are missing after a run, re-patch `hydro.namelist` and submit a short cold-start test:
+
+```bash
+cd examples/tlakale-case
+qsub scripts/run_hydro_validate.pbs
+# after job completes:
+bash scripts/check_hydro_outputs.sh /home/tmogebisa/lustre/WRF-Hydro_Coupled/cases/my_hydro_run
+```
+
+Expect `route_link_f` active, `!RESTART_FILE`, and `GW_RESTART = 0` on cold start.
+
 ---
 
 ## Phase 1 production (1980–2010)
@@ -224,7 +237,7 @@ Year WPS templates use `end_date = 'YYYY+1-01-01_00:00:00'` (via `__NEXT_YEAR__`
 | Script | Purpose |
 |--------|---------|
 | `apply_namelists.sh` | Deploy test/year namelists + patch hydro |
-| `patch_hydro_namelist.sh` | `sys_cpl=2`, hydro outputs (hourly test / 3-hourly year) |
+| `patch_hydro_namelist.sh` | `sys_cpl=2`, `route_link_f`, hydro outputs (hourly test / 3-hourly year) |
 | `get_domain_bounds.sh` | Bbox from `geo_em.d01.nc` (uses `ncdump`, no Python netCDF4) |
 | `download_era5_wps.py` | ERA5 GRIB for WPS (PC + CDS) |
 | `download_dem_opentopo.py` | Copernicus 30 m DEM via OpenTopography (PC) |

@@ -3,6 +3,7 @@
 #
 #   SIM_MODE=test  bash apply_namelists.sh
 #   SIM_MODE=year RUN_YEAR=1980 RESTART=false bash apply_namelists.sh
+#   SIM_MODE=hydro_val RESTART=false bash apply_namelists.sh
 #
 set -euo pipefail
 
@@ -47,8 +48,14 @@ case "${SIM_MODE}" in
     apply_sed "${NAMELIST_DIR}/namelist.wps.year" "${WPS_CASE_DIR}/namelist.wps"
     apply_sed "${NAMELIST_DIR}/namelist.hrldas.noahmp" "${CASE_DIR}/namelist.hrldas"
     ;;
+  hydro_val)
+    RUN_YEAR="${TEST_YEAR}"
+    apply_sed "${NAMELIST_DIR}/namelist.input.hydro_val" "${CASE_DIR}/namelist.input"
+    apply_sed "${NAMELIST_DIR}/namelist.wps.test" "${WPS_CASE_DIR}/namelist.wps"
+    apply_sed "${NAMELIST_DIR}/namelist.hrldas.noahmp" "${CASE_DIR}/namelist.hrldas"
+    ;;
   *)
-    echo "ERROR: SIM_MODE must be 'test' or 'year' (got ${SIM_MODE})"
+    echo "ERROR: SIM_MODE must be 'test', 'year', or 'hydro_val' (got ${SIM_MODE})"
     exit 1
     ;;
 esac
